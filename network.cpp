@@ -154,8 +154,8 @@ public:
 	}
 
 	/* Stochastic Gradient Decent Algorithm */
-	void SGD(std::vector<mnist::dataset>* training_data, int num_epochs,
-	 		int mini_batch_size, double learning_rate, std::vector<mnist::dataset>* test_data) {
+	void SGD(std::vector<mnist::dataset*>* training_data, int num_epochs,
+	 		int mini_batch_size, double learning_rate, std::vector<mnist::dataset*>* test_data) {
 		/* Initialize variables with useful measures */
 		std::cout << "[SGD] Beginning SGD..." << std::endl;
 		std::cout << "[SGD] Number of epochs: " << num_epochs << std::endl;
@@ -176,7 +176,7 @@ public:
 		for (int j = 0; j < num_epochs; ++j) {
 			std::cout << "[SGD] Beginning epoch " << j+1 << std::endl;
 			std::random_shuffle(training_data->begin(), training_data->end());
-			std::vector<std::vector<mnist::dataset> > mini_batches(num_mini_batches, std::vector<mnist::dataset>(mini_batch_size)); // vector of all minibatches
+			std::vector<std::vector<mnist::dataset*> > mini_batches(num_mini_batches, std::vector<mnist::dataset*>(mini_batch_size)); // vector of all minibatches
 			/* Create minibatches with random elements */
 			int minibatch_num = 0;
 			for (int k = 0; k < n - num_leftover; k += mini_batch_size, ++minibatch_num) {
@@ -204,7 +204,7 @@ public:
 	}
 
 	/* Updates given a mini batch of datasets */
-	void update_mini_batch(std::vector<mnist::dataset>* mini_batch, double learning_rate) {
+	void update_mini_batch(std::vector<mnist::dataset*>* mini_batch, double learning_rate) {
 		std::vector<Matrix> nabla_b, nabla_w;
 		
 		/* Create zero-filled matrix of same dimensions */
@@ -221,29 +221,29 @@ public:
 
 		/* Find the deltas with back propogation */
 		for (int i = 0; i < mini_batch->size(); ++i) {
-			mnist::dataset dataset = (*mini_batch).at(i);
+			mnist::dataset* dataset = (*mini_batch).at(i);
 
 			double_v dataset_input;
-			for (int i = 0; i < dataset.input.size(); ++i) {
-				dataset_input.push_back(dataset.input.at(i));
+			for (int i = 0; i < dataset->input.size(); ++i) {
+				dataset_input.push_back(dataset->input.at(i));
 			}
 			
 			std::vector<bool> dataset_output;
-			for (int i = 0; i < dataset.output.size(); ++i) {
-				dataset_output.push_back(dataset.output.at(i));
+			for (int i = 0; i < dataset->output.size(); ++i) {
+				dataset_output.push_back(dataset->output.at(i));
 			}
 
 			/* Use backpropogation to find the deltas */
-			std::pair<std::vector<Matrix>, std::vector<Matrix> > adjusted = this->backprop(dataset_input, dataset_output);
+			std::pair<std::vector<Matrix*>, std::vector<Matrix*> >* adjusted = this->backprop(dataset_input, dataset_output);
 
-			std::vector<Matrix> delta_nabla_b = adjusted.first;
-			std::vector<Matrix> delta_nabla_w = adjusted.second;
+			std::vector<Matrix*> delta_nabla_b = adjusted->first;
+			std::vector<Matrix*> delta_nabla_w = adjusted->second;
 
 			for (int i = 0; i < nabla_b.size() && i < delta_nabla_b.size(); ++i) {
-				nabla_b[i] += delta_nabla_b[i];
+				nabla_b[i] += *delta_nabla_b[i];
 			}
 			for (int i = 0; i < nabla_w.size() && i < delta_nabla_w.size(); ++i) {
-				nabla_w[i] += delta_nabla_w[i];
+				nabla_w[i] += *delta_nabla_w[i];
 			}
 		}
 		/* Update the biases and weights */
@@ -259,16 +259,16 @@ public:
 
 	/* Uses the backpropogation algorithm to calculate the errors */
 	/* Returns a std::pair with delta nabla of biases; and delta nabla of weights */
-	std::pair<std::vector<Matrix>, std::vector<Matrix> > backprop(const double_v& input, const std::vector<bool>& output) {
-		std::vector<Matrix> nabla_w, nabla_b;
+	std::pair<std::vector<Matrix*>, std::vector<Matrix*> >* backprop(const double_v& input, const std::vector<bool>& output) {
+		std::vector<Matrix*> nabla_w, nabla_b;
 		for (int i = 0; i < this->weights.size(); ++i) {
-			Matrix weight = *this->weights[i];
-			weight.zeroify();
+			Matrix* weight = new Matrix(*this->weights[i]);
+			weight->zeroify();
 			nabla_w.push_back(weight);
 		}
 		for (int i = 0; i < this->biases.size(); ++i) {
-			Matrix bias = *this->biases[i];
-			bias.zeroify();
+			Matrix* bias = new Matrix(*this->biases[i]);
+			bias->zeroify();
 			nabla_b.push_back(bias);
 		}
 
@@ -298,9 +298,9 @@ public:
 		/* Calculate the last layer of deltas */
 		Matrix delta_mat(delta);
 		delta_mat = delta_mat.transposed();
-		nabla_b.back() = delta_mat;
+		nabla_b.back() = new Matrix(delta_mat);
 		Matrix activations_sec = Matrix(activations.at(activations.size() - 2));
-		nabla_w.back() = delta_mat * activations_sec;
+		nabla_w.back() = new Matrix(delta_mat * activations_sec);
 
 		double_v z_val, sp;
 
@@ -313,10 +313,13 @@ public:
 			delta_mat = Matrix::inner_product((weights_transposed * delta_mat), Matrix(sp).transposed());
 
 			Matrix activations_mat = Matrix(activations.at(activations.size() - l-1));
-			nabla_b[nabla_b.size() - l] = delta_mat;
-			nabla_w[nabla_w.size() - l] = (delta_mat * activations_mat);
+			nabla_b[nabla_b.size() - l] = new Matrix(delta_mat);
+			nabla_w[nabla_w.size() - l] = new Matrix(delta_mat * activations_mat);
 		}
-		return std::pair<std::vector<Matrix>, std::vector<Matrix> >(nabla_b, nabla_w);
+		std::pair<std::vector<Matrix*>, std::vector<Matrix*> >* pair = new std::pair<std::vector<Matrix*>, std::vector<Matrix*> >;
+		pair->first = nabla_b;
+		pair->second = nabla_w;
+		return pair;
 	}
 
 	/* Find the difference between the correct output and the final activations */
@@ -335,13 +338,13 @@ public:
 
 	/* Evaluates a set of data and returns the number of sucessful datasets */
 	/* May have error */
-	int evaluate(std::vector<mnist::dataset>* datasets) {
+	int evaluate(std::vector<mnist::dataset*>* datasets) {
 		int num_worked = 0;
 		for (int i = 0; i < datasets->size(); ++i) {
-			mnist::dataset dataset = (*datasets)[i];
+			mnist::dataset* dataset = (*datasets)[i];
 			double_v inputs;
-			for (int i = 0; i < dataset.input.size(); ++i) {
-				inputs.push_back(dataset.input.at(i));
+			for (int i = 0; i < dataset->input.size(); ++i) {
+				inputs.push_back(dataset->input.at(i));
 			}
 
 			/* Get result for the input */
@@ -349,7 +352,7 @@ public:
 			int final_result = this->get_result(result);
 
 			/* Compare the output from the network with the correct result */
-			if (dataset.output[final_result]) num_worked++;
+			if (dataset->output[final_result]) num_worked++;
 		}
 		return num_worked;
 	}
@@ -395,7 +398,7 @@ int main() {
 	sizes.push_back(784); sizes.push_back(30); sizes.push_back(10);
 	Network network(sizes);
 
-	std::vector<mnist::dataset> test_cases = mnist::load_test_cases("mnist_test.csv");
-	std::vector<mnist::dataset> train_cases = mnist::load_test_cases("mnist_train.csv");
-	network.SGD(&train_cases, 30, 10, 3.0, &test_cases);
+	std::vector<mnist::dataset*> test_cases = mnist::load_test_cases("mnist_train_100.csv");
+	//std::vector<mnist::dataset*> train_cases = mnist::load_test_cases("mnist_train.csv");
+	network.SGD(&test_cases, 30, 10, 3.0, &test_cases);
 }

@@ -22,9 +22,9 @@ namespace mnist {
 		std::cout << data->output << std::endl;
 	}*/
 
-	std::vector<mnist::dataset> load_test_cases(std::string filename) {
+	std::vector<mnist::dataset*> load_test_cases(std::string filename) {
 		std::cout << "[MNIST] Loading test data..." << std::endl;
-		std::vector<dataset> result;
+		std::vector<mnist::dataset*> result;
 		std::string line;
 		std::ifstream in_file(filename);
 		if (!in_file.is_open()) std::cerr << "File is not open!" << std::endl;
@@ -40,19 +40,19 @@ namespace mnist {
 			while (std::getline(ss, field, ',')) {
 				v.push_back(field);
 			}
-			mnist::dataset data;
-			for (int i = 0; i < v.size() && i < data.input.size() + 1; ++i) {
+			mnist::dataset* data = new mnist::dataset;
+			for (int i = 0; i < v.size() && i < data->input.size() + 1; ++i) {
 				if (i == 0) {
-					data.output.fill(false);
+					data->output.fill(false);
 					int num = std::stoi(v[0]);
 					if (!(num >= 0 && num < OUTPUT_LENGTH)) {
 						std::cerr << "Number out of range" << std::endl;
 						throw 1;
 					}
-					data.output.at(num) = true;
+					data->output.at(num) = true;
 					// data.output = num;
 				} else {
-					data.input[i-1] = double(std::stoi(v[i]))/255.0;
+					data->input[i-1] = double(std::stoi(v[i]))/255.0;
 				}
 			}
 			result.push_back(data);
