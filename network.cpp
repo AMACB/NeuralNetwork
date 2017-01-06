@@ -31,6 +31,8 @@ public:
 	std::vector<Matrix*> biases;
 	std::vector<Matrix*> weights;
 
+	/* Debug function for printing a vector */
+	/*
 	template <typename T> static void print_v(std::vector<T> v) {
 		std::cout << "[";
 		for (int i = 0; i < v.size(); ++i) {
@@ -38,6 +40,7 @@ public:
 		}
 		std::cout << "]";
 	}
+	*/
 
 	/* 
      * Returns num_samples samples of double_v of length
@@ -56,7 +59,7 @@ public:
 		return samples;
 	}
 
-	/* Calculates the sigmoid function of a real number */
+	/* Calculates the sigmoid (prime) function of a real number */
 	static ddouble sigmoid(ddouble a) {
 		return 1/(1+std::exp(-a));
 	}
@@ -65,7 +68,7 @@ public:
 		return Network::sigmoid(a) * (1 - Network::sigmoid(a));
 	}
 
-	/* Calculates the sigmoid function of a vector */
+	/* Calculates the element-wise sigmoid (prime) function of a vector */
 	static double_v sigmoid(double_v a) {
 		double_v result;
 		for (int i = 0; i < a.size(); ++i) {
@@ -82,7 +85,7 @@ public:
 		return result;
 	}
 
-	/* Calculates the sigmoid function of a matrix */
+	/* Calculates the element-wise sigmoid(prime) function of a matrix */
 	static Matrix sigmoid(Matrix a) {
 		for (int i = 0; i < a.rows; ++i) {
 			for (int j = 0; j < a.cols; ++j) {
@@ -238,18 +241,21 @@ public:
 
 			std::vector<Matrix*> delta_nabla_b = adjusted->first;
 			std::vector<Matrix*> delta_nabla_w = adjusted->second;
+			delete adjusted;
 
 			for (int i = 0; i < nabla_b.size() && i < delta_nabla_b.size(); ++i) {
 				nabla_b[i] += *delta_nabla_b[i];
+				delete delta_nabla_b[i];
 			}
 			for (int i = 0; i < nabla_w.size() && i < delta_nabla_w.size(); ++i) {
 				nabla_w[i] += *delta_nabla_w[i];
+				delete delta_nabla_w[i];
 			}
 		}
 		/* Update the biases and weights */
 		for (int i = 0; i < this->biases.size() && i < nabla_b.size(); ++i) {
 			Matrix nabla_b_val = nabla_b[i] * (- learning_rate / mini_batch->size());
-			*this->biases[i] += nabla_b_val; 
+			*this->biases[i] += nabla_b_val;
 		}
 		for (int i = 0; i < this->weights.size() && i < nabla_w.size(); ++i) {
 			Matrix nabla_w_val = nabla_w[i] * (- learning_rate / mini_batch->size());
@@ -260,8 +266,8 @@ public:
 	/* Uses the backpropogation algorithm to calculate the errors */
 	/* Returns a std::pair with delta nabla of biases; and delta nabla of weights */
 	std::pair<std::vector<Matrix*>, std::vector<Matrix*> >* backprop(const double_v& input, const std::vector<bool>& output) {
-		std::vector<Matrix*> nabla_w, nabla_b;
-		for (int i = 0; i < this->weights.size(); ++i) {
+		std::vector<Matrix*> nabla_w(this->weights.size()), nabla_b(this->biases.size());
+		/*for (int i = 0; i < this->weights.size(); ++i) {
 			Matrix* weight = new Matrix(*this->weights[i]);
 			weight->zeroify();
 			nabla_w.push_back(weight);
@@ -270,7 +276,7 @@ public:
 			Matrix* bias = new Matrix(*this->biases[i]);
 			bias->zeroify();
 			nabla_b.push_back(bias);
-		}
+		}*/
 
 		/* Feedforward and save activations and z values into vector of vectors */
 		std::vector<double_v> activations, zvalues;
@@ -367,31 +373,6 @@ public:
 		return index_of_max;
 	}
 };
-
-/* Misceallaneous print methods for debugging */
-template <typename T> void print_v(std::vector<T> v) {
-	for (int i = 0; i < v.size(); ++i) {
-		std::cout << v[i] << ",";
-	}
-	std::cout << std::endl;
-}
-
-void print_vv(Matrix v) {
-	v.print();
-}
-
-void print_vvv(std::vector<Matrix> v) {
-	std::cout << "[";
-	for (int i = 0; i < v.size(); ++i) {
-		print_vv(v[i]);
-		std::cout << "," << std::endl;
-	}
-	std::cout << "]" << std::endl;
-}
-
-void printl() {
-	std::cout << std::endl << std::flush;
-}
 
 int main() {
 	std::vector<int> sizes;
