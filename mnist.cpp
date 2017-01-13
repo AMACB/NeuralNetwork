@@ -59,7 +59,7 @@ namespace mnist {
 			result.push_back(data);
 		}
 		in_file.close();
-		std::cout << "\r[MNIST] Test data loaded" << std::endl;
+		std::cout << "\r[MNIST] Test data loaded       " << std::endl;
 		return result;
 	}
 }

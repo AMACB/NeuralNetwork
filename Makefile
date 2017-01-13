@@ -1,7 +1,7 @@
 make:
-	g++ network.cpp -o network
+	g++ network.cpp -o network.out
 exec:
 	make
-	./network
+	./network.out
 clean:
-	rm network
+	rm network.out

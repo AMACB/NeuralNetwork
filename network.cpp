@@ -49,15 +49,13 @@ public:
      * Returns num_samples samples of double_v of length
      * len_samples of normal distribution
      */
-	static Matrix normal_samples(int num_samples, int len_samples) {
+	static Matrix* normal_samples(int num_samples, int len_samples) {
 		std::random_device rd;
 		std::default_random_engine generator(rd());
 		std::normal_distribution<double> normal_dist;
-		Matrix samples(num_samples, len_samples);
-		for (int i = 0; i < num_samples; ++i) {
-			for (int j = 0; j < len_samples; ++j) {
-				samples.set_index(i,j,(normal_dist(generator)));
-			}
+		Matrix* samples = new Matrix(num_samples, len_samples);
+		for (int i = 0; i < samples->data.size(); ++i) {
+			samples->data[i] = (normal_dist(generator));
 		}
 		return samples;
 	}
@@ -111,8 +109,7 @@ public:
 		int i = 0;
 		for (iter = sizes.begin() + 1; iter < sizes.end(); ++i, ++iter) {
 			/* Pushes a single layer at a time */
-			Matrix* samples = new Matrix;
-			*samples = Network::normal_samples(*iter, 1);
+			Matrix* samples = Network::normal_samples(*iter, 1);
 			biases.push_back(samples);
 		}
 		std::vector<int>::iterator iter_2;
@@ -124,8 +121,7 @@ public:
 		for (iter_2 = iter + 1; iter_2 < sizes.end(); ++iter, ++iter_2) {
 			/* iter is one element behind iter_2 */
 			/* Pushes a single layer at a time */
-			Matrix* samples = new Matrix;
-			*samples = Network::normal_samples(*iter_2, *iter);
+			Matrix* samples = Network::normal_samples(*iter_2, *iter);
 			weights.push_back(samples);
 		}
 
@@ -168,15 +164,15 @@ public:
 		std::cout << "[SGD] Mini batch size: " << mini_batch_size << std::endl;
 		std::cout << "[SGD] Learning rate: " << learning_rate << std::endl;
 
-		int n_test = 0; // number of test datasets
-		if (test_data->size() > 0) n_test = test_data->size();
-		std::cout << "[SGD] Number of test datasets: " << n_test << std::endl;
-		int n = training_data->size(); // number of training datasets
-		std::cout << "[SGD] Number of training datasets: " << n << std::endl;
+		size_t n_test        = test_data->size(); // number of test datasets
+		int n                = training_data->size(); // number of training datasets
 		int num_mini_batches = n / mini_batch_size; // the number of minibatches
-		std::cout << "[SGD] Number of minibatches: " << num_mini_batches << std::endl;
-		int num_leftover = n % mini_batch_size;
-		std::cout << "[SGD] Number of leftover datasets: " << num_leftover << std::endl;
+		int num_leftover     = n % mini_batch_size;
+		
+		// std::cout << "[SGD] Number of test datasets: " << n_test << std::endl;
+		// std::cout << "[SGD] Number of training datasets: " << n << std::endl;
+		// std::cout << "[SGD] Number of minibatches: " << num_mini_batches << std::endl;
+		// std::cout << "[SGD] Number of leftover datasets: " << num_leftover << std::endl;
 		/* n mod mini_batch_size datasets are excluded to make sure minibatches have same size */
 		
 		for (int j = 0; j < num_epochs; ++j) {
@@ -365,7 +361,7 @@ int main() {
 	sizes.push_back(784); sizes.push_back(30); sizes.push_back(10);
 	Network network(sizes);
 
-	std::vector<mnist::dataset*> test_cases = mnist::load_test_cases("mnist_test.csv");
-	//std::vector<mnist::dataset*> train_cases = mnist::load_test_cases("mnist_train.csv");
+	std::vector<mnist::dataset*> test_cases = mnist::load_test_cases("data/mnist_test.csv");
+	//std::vector<mnist::dataset*> train_cases = mnist::load_test_cases("data/mnist_train.csv");
 	network.SGD(&test_cases, 30, 10, 3.0, &test_cases);
 }

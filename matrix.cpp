@@ -29,11 +29,11 @@ public:
 	}
 
 	/* Constructs a row matrix from a vector */
-	Matrix(double_v vec) {
+	Matrix(const double_v& vec) {
 		this->cols = vec.size();
 		this->rows = 1;
 		this->num_elements = vec.size();
-		this->data = vec;
+		this->data = std::vector<double>(vec.begin(), vec.end());
 	}
 
 	/* Copy constructor */
@@ -91,13 +91,12 @@ public:
 	/* Returns a transposed version of the Matrix */
 	Matrix transposed() const {
 		Matrix result(this->cols, this->rows);
-		double_v new_data;
+		size_t k = 0;
 		for (size_t j = 0; j < cols; ++j) {
-			for (size_t i = 0; i < rows; ++i) {
-				new_data.push_back(this->index(i,j));
+			for (size_t i = 0; i < rows; ++i, ++k) {
+				result.data[k] = this->index(i,j);
 			}
 		}
-		result.data = new_data;
 		return result;
 	}
 
@@ -130,7 +129,7 @@ public:
 	}
 
 	/* Inner product of matrices */
-	static Matrix inner_product(Matrix a, Matrix b) {
+	static Matrix inner_product(const Matrix& a, const Matrix& b) {
 		if (a.rows == b.rows && a.cols == b.cols) {
 			/* Element-wise product */
 			Matrix result(a.rows, a.cols);
@@ -154,7 +153,7 @@ public:
 	}
 
 	/* Vector times matrix */
-	Matrix operator*(double_v vec) const {
+	Matrix operator*(const double_v& vec) const {
 		Matrix result(this->rows, this->cols);
 		if (this->cols == vec.size()) {
 			/* Multiply element-wise through rows */
@@ -212,7 +211,7 @@ public:
 	}
 
 	/* Adds matrices by element */
-	Matrix operator+(const Matrix& other) {
+	Matrix operator+(const Matrix& other) const {
 		if (this->cols == other.cols && this->rows == other.rows) {
 		/* Element-wise addition */
 			Matrix result(this->rows, this->cols);
@@ -228,32 +227,12 @@ public:
 
 	/* Adds the vectors by element */
 	/* Converts this Matrix to a vector if possible; else throws error*/
-	Matrix operator+(const double_v& other) {
-		double_v vals;
+	Matrix operator+(const double_v& other) const {
 		if ((this->cols == 1 && this->rows == other.size()) || (this->rows == 1 && this->cols == other.size())) {
 			/* Runs as if this is a vector */
-			vals = this->flatten();
-			double_v result;
-			for (size_t i = 0; i < vals.size() && i < other.size(); ++i) {
-				result.push_back(vals[i] + other[i]);
-			}
-			return Matrix(result);
-		} else if (this->cols == other.size()) {
-			/* Add the vector to each row component-wise */
 			Matrix result(this->rows, this->cols);
-			for (size_t i = 0; i < this->rows; ++i) {
-				for (size_t j = 0; j < this->cols && j < other.size(); ++j) {
-					result.set_index(i,j,this->index(i,j) + other[j]);
-				}
-			}
-			return result;
-		} else if (this->rows == other.size()) {
-			/* Add the vector to each column component-wise */
-			Matrix result(this->rows, this->cols);
-			for (size_t i = 0; i < this->cols; ++i) {
-				for (size_t j = 0; j < this->rows && j < other.size(); ++j) {
-					result.set_index(i,j,this->index(i,j) + other[j]);
-				}
+			for (size_t i = 0; i < this->data.size() && i < other.size(); ++i) {
+				result.data[i] = this->data[i] + other[i];
 			}
 			return result;
 		} else {
