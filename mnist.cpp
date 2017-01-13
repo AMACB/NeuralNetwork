@@ -1,4 +1,3 @@
-#include <array>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -9,8 +8,8 @@
 
 namespace mnist {
 	struct dataset {
-		std::array<double, INPUT_LENGTH> input;
-		std::array<bool, OUTPUT_LENGTH> output;
+		std::vector<double> input;
+		std::vector<bool> output;
 	};
 
 	/*void print_data(mnist::dataset* data) {
@@ -41,9 +40,11 @@ namespace mnist {
 				v.push_back(field);
 			}
 			mnist::dataset* data = new mnist::dataset;
+			data->input.resize(INPUT_LENGTH);
+			data->output.resize(OUTPUT_LENGTH);
 			for (int i = 0; i < v.size() && i < data->input.size() + 1; ++i) {
 				if (i == 0) {
-					data->output.fill(false);
+					std::fill(data->output.begin(), data->output.end(), false);
 					int num = std::stoi(v[0]);
 					if (!(num >= 0 && num < OUTPUT_LENGTH)) {
 						std::cerr << "Number out of range" << std::endl;

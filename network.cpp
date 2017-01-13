@@ -11,6 +11,9 @@
 #include "mnist.cpp"
 #include "matrix.cpp"
 
+typedef std::chrono::steady_clock::time_point time_point;
+#define now() std::chrono::steady_clock::now();
+
 class Network {
 public:
 	typedef double ddouble;
@@ -224,33 +227,23 @@ public:
 
 		/* Find the deltas with back propogation */
 		for (int i = 0; i < mini_batch->size(); ++i) {
-			mnist::dataset* dataset = (*mini_batch).at(i);
-
-			double_v dataset_input;
-			for (int i = 0; i < dataset->input.size(); ++i) {
-				dataset_input.push_back(dataset->input.at(i));
-			}
-			
-			std::vector<bool> dataset_output;
-			for (int i = 0; i < dataset->output.size(); ++i) {
-				dataset_output.push_back(dataset->output.at(i));
-			}
+			mnist::dataset* dataset = mini_batch->at(i);
 
 			/* Use backpropogation to find the deltas */
-			std::pair<std::vector<Matrix*>, std::vector<Matrix*> >* adjusted = this->backprop(dataset_input, dataset_output);
+			// The std::pair<...> storage class is extremely slow, resulting in this code being slow as well
+			std::pair<std::vector<Matrix*>, std::vector<Matrix*> >* adjusted = this->backprop(dataset);
 
-			std::vector<Matrix*> delta_nabla_b = adjusted->first;
-			std::vector<Matrix*> delta_nabla_w = adjusted->second;
+			for (int i = 0; i < nabla_b.size() && i < adjusted->first.size(); ++i) {
+				nabla_b[i] += *adjusted->first[i];
+				delete adjusted->first[i];
+			}
+			for (int i = 0; i < nabla_w.size() && i < adjusted->second.size(); ++i) {
+				nabla_w[i] += *adjusted->second[i];
+				delete adjusted->second[i];
+			}
 			delete adjusted;
-
-			for (int i = 0; i < nabla_b.size() && i < delta_nabla_b.size(); ++i) {
-				nabla_b[i] += *delta_nabla_b[i];
-				delete delta_nabla_b[i];
-			}
-			for (int i = 0; i < nabla_w.size() && i < delta_nabla_w.size(); ++i) {
-				nabla_w[i] += *delta_nabla_w[i];
-				delete delta_nabla_w[i];
-			}
+			
+			// std::cout << "took " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000.0 << " ms" << std::endl;
 		}
 		/* Update the biases and weights */
 		for (int i = 0; i < this->biases.size() && i < nabla_b.size(); ++i) {
@@ -265,26 +258,16 @@ public:
 
 	/* Uses the backpropogation algorithm to calculate the errors */
 	/* Returns a std::pair with delta nabla of biases; and delta nabla of weights */
-	std::pair<std::vector<Matrix*>, std::vector<Matrix*> >* backprop(const double_v& input, const std::vector<bool>& output) {
+	std::pair<std::vector<Matrix*>, std::vector<Matrix*> >* backprop(mnist::dataset* dataset) {
 		std::vector<Matrix*> nabla_w(this->weights.size()), nabla_b(this->biases.size());
-		/*for (int i = 0; i < this->weights.size(); ++i) {
-			Matrix* weight = new Matrix(*this->weights[i]);
-			weight->zeroify();
-			nabla_w.push_back(weight);
-		}
-		for (int i = 0; i < this->biases.size(); ++i) {
-			Matrix* bias = new Matrix(*this->biases[i]);
-			bias->zeroify();
-			nabla_b.push_back(bias);
-		}*/
 
 		/* Feedforward and save activations and z values into vector of vectors */
 		std::vector<double_v> activations, zvalues;
-		double_v activation(input.begin(), input.end());
+		double_v activation(dataset->input.begin(), dataset->input.end());
 		activations.push_back(activation);
 
 		Matrix activation_mat = Matrix(activation).transposed();
-
+		
 		for (int i = 0; i < this->biases.size() && i < this->weights.size(); ++i) {
 			Matrix *bias = this->biases[i], *weight = this->weights[i];
 			double_v zvalue = ((*weight * activation_mat) + bias->flatten()).flatten();
@@ -296,7 +279,7 @@ public:
 		}
 
 		/* Backward pass */
-		double_v delta = this->cost_derivative(activations.back(), output);
+		double_v delta = this->cost_derivative(activations.back(), dataset->output);
 		for (int i = 0; i < delta.size() && i < zvalues.back().size(); ++i) {
 			delta.at(i) *=  Network::sigmoid_prime(zvalues.back().at(i));
 		}
@@ -322,6 +305,9 @@ public:
 			nabla_b[nabla_b.size() - l] = new Matrix(delta_mat);
 			nabla_w[nabla_w.size() - l] = new Matrix(delta_mat * activations_mat);
 		}
+		
+		// std::cout << "took " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000.0 << " ms" << std::endl;
+		
 		std::pair<std::vector<Matrix*>, std::vector<Matrix*> >* pair = new std::pair<std::vector<Matrix*>, std::vector<Matrix*> >;
 		pair->first = nabla_b;
 		pair->second = nabla_w;
@@ -379,7 +365,7 @@ int main() {
 	sizes.push_back(784); sizes.push_back(30); sizes.push_back(10);
 	Network network(sizes);
 
-	std::vector<mnist::dataset*> test_cases = mnist::load_test_cases("mnist_train_100.csv");
+	std::vector<mnist::dataset*> test_cases = mnist::load_test_cases("mnist_test.csv");
 	//std::vector<mnist::dataset*> train_cases = mnist::load_test_cases("mnist_train.csv");
 	network.SGD(&test_cases, 30, 10, 3.0, &test_cases);
 }

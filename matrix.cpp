@@ -36,6 +36,14 @@ public:
 		this->data = vec;
 	}
 
+	/* Copy constructor */
+	Matrix(const Matrix& other) {
+		this->rows = other.rows;
+		this->cols = other.cols;
+		this->num_elements = other.num_elements;
+		this->data = std::vector<double>(other.data.begin(), other.data.end());
+	}
+
 	/* Frees up all memory */
 	~Matrix() {
 	}
