@@ -26,7 +26,9 @@ namespace mnist {
 		std::vector<mnist::dataset*> result;
 		std::string line;
 		std::ifstream in_file(filename);
-		if (!in_file.is_open()) std::cerr << "File is not open!" << std::endl;
+		if (!in_file.is_open()) {
+			std::cerr << "Could not read file " << filename << std::endl;
+		}
 		std::cout << "[MNIST] Reading CSV file..." << std::endl;
 		std::cout << "[MNIST] Loading test cases..." << std::endl;
 		int current_count = 0;

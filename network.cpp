@@ -130,6 +130,13 @@ public:
 		 */
 		this->num_layers = sizes.size();
 	}
+	
+/*
+ * Loads the network from a previously-saved file
+ */
+	Network(std::string filename) {
+		
+	}
 
 	~Network() {
 		for (int i = 0; i < this->weights.size(); ++i) {
@@ -156,8 +163,8 @@ public:
 	}
 
 	/* Stochastic Gradient Decent Algorithm */
-	void SGD(std::vector<mnist::dataset*>* training_data, int num_epochs,
-	 		int mini_batch_size, double learning_rate, std::vector<mnist::dataset*>* test_data) {
+	void SGD(std::vector<mnist::dataset*>* training_data, std::vector<mnist::dataset*>* test_data,
+			int num_epochs, int mini_batch_size, double learning_rate) {
 		/* Initialize variables with useful measures */
 		std::cout << "[SGD] Beginning SGD..." << std::endl;
 		std::cout << "[SGD] Number of epochs: " << num_epochs << std::endl;
@@ -355,13 +362,3 @@ public:
 		return index_of_max;
 	}
 };
-
-int main() {
-	std::vector<int> sizes;
-	sizes.push_back(784); sizes.push_back(30); sizes.push_back(10);
-	Network network(sizes);
-
-	std::vector<mnist::dataset*> test_cases = mnist::load_test_cases("data/mnist_test.csv");
-	//std::vector<mnist::dataset*> train_cases = mnist::load_test_cases("data/mnist_train.csv");
-	network.SGD(&test_cases, 30, 10, 3.0, &test_cases);
-}
