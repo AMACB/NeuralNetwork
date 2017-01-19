@@ -1,5 +1,5 @@
 make:
-	g++ main.cpp -o network.out
+	g++ src/main.cpp -o network.out
 exec:
 	make
 	./network.out
