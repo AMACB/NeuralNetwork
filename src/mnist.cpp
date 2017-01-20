@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "src/mnist.h"
+#include "mnist.h"
 
 namespace mnist {
     std::vector<mnist::dataset*> load_test_cases(std::string filename) {

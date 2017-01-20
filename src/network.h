@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-#include "src/matrix.h"
-#include "src/mnist.h"
+#include "matrix.h"
+#include "mnist.h"
 
 typedef double ddouble;
 typedef std::vector<ddouble> double_v;

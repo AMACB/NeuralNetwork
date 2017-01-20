@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "network.hpp"
+#include "network.h"
 
 #define tab '\t'
 #define PARAM_SIZE 1

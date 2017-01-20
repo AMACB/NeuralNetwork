@@ -17,16 +17,16 @@ class Matrix {
     double_v data;
 
     /* Constructs a blank matrix */
-    Matrix();
+    explicit Matrix();
 
     /* Constructs an m x n matrix */
-    Matrix(size_t, size_t);
+    Matrix(const size_t&, const size_t&);
 
     /* Constructs a row matrix from a vector */
-    explicit Matrix(const double_v&);
+    Matrix(const double_v&);
 
     /* Copy constructor */
-    explicit Matrix(const Matrix&);
+    Matrix(const Matrix&);
 
     /* Frees up all memory */
     ~Matrix();

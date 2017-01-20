@@ -12,7 +12,7 @@
 #include <utility>
 #include <vector>
 
-#include "src/network.h"
+#include "network.h"
 
 typedef std::chrono::steady_clock::time_point time_point;
 #define now() std::chrono::steady_clock::now();
@@ -279,8 +279,7 @@ std::pair<std::vector<Matrix>, std::vector<Matrix> >* Network::backprop(mnist::d
         nabla_w.at(nabla_w.size() - l) = Matrix(delta_mat * activations_mat);
     }
 
-    std::pair<std::vector<Matrix>, std::vector<Matrix> >* pair
-        = new std::pair<std::vector<Matrix>, std::vector<Matrix> >;
+    auto pair = new std::pair<std::vector<Matrix>, std::vector<Matrix> >;
     pair->first = nabla_b;
     pair->second = nabla_w;
 

@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "src/matrix.h"
+#include "matrix.h"
 
 namespace network {
 /* Constructs a blank matrix */
@@ -15,7 +15,7 @@ Matrix::Matrix() {
 }
 
 /* Constructs an m x n matrix */
-Matrix::Matrix(size_t m, size_t n) {
+Matrix::Matrix(const size_t& m, const size_t& n) {
     this->rows = m;
     this->cols = n;
     this->num_elements = m*n;
