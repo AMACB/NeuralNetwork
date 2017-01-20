@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "network.cpp"
+#include "network.hpp"
 
 #define tab '\t'
 #define PARAM_SIZE 1
@@ -12,13 +12,6 @@ using std::cout;
 using std::cerr;
 using std::cin;
 using std::endl;
-
-typedef enum {
-	testing_file,
-	epoch_count,
-	mini_batch_size,
-	
-} option;
 
 void print_usage();
 void print_short_usage();
@@ -44,9 +37,9 @@ int main(int argc, char* argv[]) {
 	std::string test_file;
 	
 	double learning_rate = 1.0;
-	int hidden_layer_size = 10;
-	int epoch_count = 1;
-	int mini_batch_size = 1;
+	size_t hidden_layer_size = 10;
+	size_t epoch_count = 1;
+	size_t mini_batch_size = 1;
 	
 	bool has_load = false;
 	std::string load;
@@ -54,7 +47,7 @@ int main(int argc, char* argv[]) {
 	bool has_output = false;
 	std::string output;
 	
-	for (int i = PARAM_SIZE; i < args.size() ; i += 2) {
+	for (size_t i = PARAM_SIZE; i < args.size() ; i += 2) {
 		std::string arg = args[i];
 		if (arg == "--testing-file" || arg == "-t") {
 			has_test = true;
@@ -64,10 +57,10 @@ int main(int argc, char* argv[]) {
 			learning_rate = std::stod(args[i+1]);
 		}
 		else if (arg == "--hidden-layer-size" || arg == "-s") {
-			hidden_layer_size = std::stoi(args[i+1]);
+			hidden_layer_size = std::stoul(args[i+1]);
 		}
 		else if (arg == "--epoch-count" || arg == "-e") {
-			epoch_count = std::stoi(args[i+1]);
+			epoch_count = std::stoul(args[i+1]);
 		}
 		else if (arg == "--mini-batch-size" || arg == "-m") {
 			mini_batch_size = std::stof(args[i+1]);
@@ -92,7 +85,7 @@ int main(int argc, char* argv[]) {
 		network = new Network(load);
 	} else {
 		/* Initialize biases and weights using Gaussian distribution */
-		std::vector<int> sizes;
+		std::vector<size_t> sizes;
 		sizes.push_back(784); sizes.push_back(hidden_layer_size); sizes.push_back(10);
 		network = new Network(sizes);
 	}

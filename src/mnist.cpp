@@ -3,24 +3,9 @@
 #include <sstream>
 #include <vector>
 
-#define INPUT_LENGTH 784
-#define OUTPUT_LENGTH 10
+#include "mnist.hpp"
 
 namespace mnist {
-	struct dataset {
-		std::vector<double> input;
-		std::vector<bool> output;
-	};
-
-	/*void print_data(mnist::dataset* data) {
-		std::cout << "[";
-		for (int i = 0; i < data->input.size(); ++i) {
-			std::cout << data->input[i] << ",";
-		}
-		std::cout << "]" << std::endl;
-		std::cout << data->output << std::endl;
-	}*/
-
 	std::vector<mnist::dataset*> load_test_cases(std::string filename) {
 		std::cout << "[MNIST] Loading test data..." << std::endl;
 		std::vector<mnist::dataset*> result;
@@ -44,11 +29,11 @@ namespace mnist {
 			mnist::dataset* data = new mnist::dataset;
 			data->input.resize(INPUT_LENGTH);
 			data->output.resize(OUTPUT_LENGTH);
-			for (int i = 0; i < v.size() && i < data->input.size() + 1; ++i) {
+			for (size_t i = 0; i < v.size() && i < data->input.size() + 1; ++i) {
 				if (i == 0) {
 					std::fill(data->output.begin(), data->output.end(), false);
-					int num = std::stoi(v[0]);
-					if (!(num >= 0 && num < OUTPUT_LENGTH)) {
+					size_t num = std::stoul(v[0]);
+					if (!(num < OUTPUT_LENGTH)) {
 						std::cerr << "Number out of range" << std::endl;
 						throw 1;
 					}
@@ -65,4 +50,3 @@ namespace mnist {
 		return result;
 	}
 }
-

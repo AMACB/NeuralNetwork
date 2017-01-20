@@ -1,7 +1,17 @@
-make:
-	g++ src/main.cpp -o network.out
-exec:
-	make
-	./network.out
+CC=g++
+CFLAGS=-c -pedantic -Wall -Wextra -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-declarations -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-conversion -Wsign-promo -Wstrict-overflow=5 -Wswitch-default -Wundef -Wno-unused
+LDFLAGS=
+SOURCES=src/main.cpp src/matrix.cpp src/mnist.cpp src/network.cpp
+OBJECTS=$(SOURCES:.cpp=.o)
+EXECUTABLE=network
+
+all: $(SOURCES) $(EXECUTABLE)
+
 clean:
-	rm network.out
+	rm $(OBJECTS)
+	    
+$(EXECUTABLE): $(OBJECTS) 
+	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+	
+.cpp.o:
+	$(CC) $(CFLAGS) $< -o $@
