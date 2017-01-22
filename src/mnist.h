@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "log/logging.h"
+
 #define INPUT_LENGTH 784
 #define OUTPUT_LENGTH 10
 

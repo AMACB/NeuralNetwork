@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "log/logging.h"
 #include "matrix.h"
 #include "mnist.h"
 

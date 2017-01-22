@@ -138,10 +138,11 @@ double_v Network::feedforward(double_v current) {
 void Network::SGD(std::vector<mnist::dataset*>* training_data, std::vector<mnist::dataset*>* test_data,
         size_t num_epochs, size_t mini_batch_size, double learning_rate) {
     /* Initialize variables with useful measures */
-    std::cout << "[SGD] Beginning SGD..." << std::endl;
-    std::cout << "[SGD] Number of epochs: " << num_epochs << std::endl;
-    std::cout << "[SGD] Mini batch size: " << mini_batch_size << std::endl;
-    std::cout << "[SGD] Learning rate: " << learning_rate << std::endl;
+    log(logPROGRESS) << "[SGD] Beginning SGD..." << "\n";
+    log(logINFO) << "[SGD] Number of epochs: " << num_epochs << "\n";
+    log(logINFO) << "[SGD] Mini batch size: " << mini_batch_size << "\n";
+    log(logINFO) << "[SGD] Learning rate: " << learning_rate << "\n";
+
 
     size_t n_test           = test_data->size();          // number of test datasets
     size_t n                = training_data->size();   // number of training datasets
@@ -151,7 +152,7 @@ void Network::SGD(std::vector<mnist::dataset*>* training_data, std::vector<mnist
     /* n mod mini_batch_size datasets are excluded to make sure minibatches have same size */
 
     for (size_t j = 0; j < num_epochs; ++j) {
-        std::cout << "[SGD] Beginning epoch " << j+1 << std::endl;
+        log(logINFO) << "[SGD] Beginning epoch " << j+1 << '\n';
         std::random_shuffle(training_data->begin(), training_data->end());
         /* Vector of all minibatches */
         std::vector<std::vector<mnist::dataset*> > mini_batches(num_mini_batches,
@@ -164,21 +165,21 @@ void Network::SGD(std::vector<mnist::dataset*>* training_data, std::vector<mnist
             }
         }
 
-        std::cout << "[SGD] Updating minibatches..." << std::endl;
-        std::cout << "[SGD] Updating minibatch 0";
+        log(logINFO) << "[SGD] Updating minibatches..." << '\n';
+        log(logINFO) << "[SGD] Updating minibatch 0";
         /* Update each minibatch */
         for (size_t i = 0; i < num_mini_batches; ++i) {
-            std::cout << "\r[SGD] Updating minibatch " << i+1 << std::flush;
+            log(logINFO) << "\r[SGD] Updating minibatch " << i+1;
             this->update_mini_batch(&mini_batches[i], learning_rate);
         }
-        std::cout << "\r[SGD] Done updating minibatches" << std::endl;
+        log(logINFO) << "\r[SGD] Done updating minibatches\n";
 
         if (test_data->size() > 0) {
-            std::cout << "[SGD] Evaluating test dataset..." << std::endl;
-            std::cout << "Epoch " << j+1 << ": "
-                << this->evaluate(test_data) << " / " << n_test << std::endl;
+            log(logINFO) << "[SGD] Evaluating test dataset...\n";
+            log(logPROGRESS) << "Epoch " << j+1 << ": "
+                << this->evaluate(test_data) << " / " << n_test << "\n";
         } else {
-            std::cout << "Epoch " << j+1 << " complete." << std::endl;
+            log(logPROGRESS) << "Epoch " << j+1 << " complete." << "\n";
         }
     }
 }

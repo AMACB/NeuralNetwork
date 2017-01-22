@@ -5,7 +5,10 @@
 #include <string>
 #include <vector>
 
+#include "log/logging.h"
 #include "network.h"
+
+LogLevel loglevel;
 
 #define tab '\t'
 #define PARAM_SIZE 1
@@ -31,10 +34,11 @@ int main(int argc, char* argv[]) {
         print_short_usage();
         exit(0);
     }
-    if ((args.size() - PARAM_SIZE) % 2 == 1) {
+
+/*  if ((args.size() - PARAM_SIZE) % 2 == 1) {
         cerr << "Option missing parameter" << endl;
         exit(1);
-    }
+    } */
 
     bool has_test = false;
     std::string test_file;
@@ -49,26 +53,39 @@ int main(int argc, char* argv[]) {
 
     bool has_output = false;
     std::string output;
+    
+    loglevel = logPROGRESS;
 
-    for (size_t i = PARAM_SIZE; i < args.size() ; i += 2) {
+    for (size_t i = PARAM_SIZE; i < args.size(); ++i) {
         std::string arg = args[i];
         if (arg == "--testing-file" || arg == "-t") {
             has_test = true;
             test_file = args[i+1];
+            ++i;
         } else if (arg == "--learning-rate" || arg == "-r") {
             learning_rate = std::stod(args[i+1]);
+            ++i;
         } else if (arg == "--hidden-layer-size" || arg == "-s") {
             hidden_layer_size = std::stoul(args[i+1]);
+            ++i;
         } else if (arg == "--epoch-count" || arg == "-e") {
             epoch_count = std::stoul(args[i+1]);
+            ++i;
         } else if (arg == "--mini-batch-size" || arg == "-m") {
             mini_batch_size = std::stof(args[i+1]);
+            ++i;
         } else if (arg == "--output" || arg == "-o") {
             has_output = true;
             output = args[i+1];
+            ++i;
         } else if (arg == "--load" || arg == "-l") {
             has_load = true;
             load = args[i+1];
+            ++i;
+        } else if (arg == "--verbose" || arg == "-v") {
+        	loglevel = logINFO;
+        } else if (arg == "--quiet" || arg == "-q") {
+        	loglevel = logWARNING;
         } else {
             cerr << "Invalid option flag: " << arg << endl;
             exit(1);

@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "log/logging.h"
+
 typedef double ddouble;
 typedef std::vector<ddouble> double_v;
 
