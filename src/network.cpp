@@ -27,8 +27,8 @@ Matrix* Network::normal_samples(size_t num_samples, size_t len_samples) {
     std::default_random_engine generator(rd());
     std::normal_distribution<double> normal_dist;
     Matrix* samples = new Matrix(num_samples, len_samples);
-    for (size_t i = 0; i < samples->data.size(); ++i) {
-        samples->data[i] = (normal_dist(generator));
+    for (double_v::iterator iter = samples->data.begin(); iter != samples->data.end(); ++iter) {
+        *iter = (normal_dist(generator));
     }
     return samples;
 }
@@ -45,26 +45,24 @@ inline ddouble Network::sigmoid_prime(ddouble a) {
 /* Calculates the element-wise sigmoid (prime) function of a vector */
 double_v Network::sigmoid(double_v a) {
     double_v result;
-    for (size_t i = 0; i < a.size(); ++i) {
-        result.push_back(sigmoid(static_cast<double>(a[i])));
+    for (double_v::const_iterator iter = a.begin(); iter != a.end(); ++iter) {
+        result.push_back(sigmoid(static_cast<double>(*iter)));
     }
     return result;
 }
 
 double_v Network::sigmoid_prime(double_v a) {
     double_v result;
-    for (size_t i = 0; i < a.size(); ++i) {
-            result.push_back(sigmoid_prime(static_cast<double>(a[i])));
+    for (double_v::const_iterator iter = a.begin(); iter != a.end(); ++iter) {
+        result.push_back(sigmoid_prime(static_cast<double>(*iter)));
     }
     return result;
 }
 
 /* Calculates the element-wise sigmoid(prime) function of a matrix */
 Matrix Network::sigmoid(Matrix a) {
-    for (size_t i = 0; i < a.rows; ++i) {
-        for (size_t j = 0; j < a.cols; ++j) {
-            a.set_index(i, j, (sigmoid(a.index(i, j))));
-        }
+    for (double_v::iterator iter = a.data.begin(); iter != a.data.end(); ++iter) {
+        *iter = sigmoid(*iter);
     }
     return a;
 }
@@ -111,11 +109,11 @@ Network::Network(std::string filename) {
 }
 
 Network::~Network() {
-    for (size_t i = 0; i < this->weights.size(); ++i) {
-        delete this->weights.at(i);
+    for (auto iter = this->weights.begin(); iter != this->weights.end(); ++iter) {
+        delete *iter;
     }
-    for (size_t i = 0; i < this->biases.size(); ++i) {
-        delete this->biases.at(i);
+    for (auto iter = this->biases.begin(); iter != this->biases.end(); ++iter) {
+        delete *iter;
     }
 }
 
@@ -143,11 +141,10 @@ void Network::SGD(std::vector<mnist::dataset*>* training_data, std::vector<mnist
     log(logINFO) << "[SGD] Mini batch size: " << mini_batch_size << "\n";
     log(logINFO) << "[SGD] Learning rate: " << learning_rate << "\n";
 
-
-    size_t n_test           = test_data->size();          // number of test datasets
+    size_t n_test           = test_data->size();       // number of test datasets
     size_t n                = training_data->size();   // number of training datasets
-    size_t num_mini_batches = n / mini_batch_size;     // the number of minibatches
-    size_t num_leftover     = n % mini_batch_size;
+    size_t num_mini_batches = n / mini_batch_size;     // number of minibatches
+    size_t num_leftover     = n % mini_batch_size;     // number of leftover minibatches
 
     /* n mod mini_batch_size datasets are excluded to make sure minibatches have same size */
 
