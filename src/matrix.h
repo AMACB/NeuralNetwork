@@ -56,6 +56,9 @@ class Matrix {
 
     /* Scalar multiplication */
     Matrix operator*(double) const;
+    
+    /* Compound scalar multiplication */
+    void operator*=(double);
 
     /* Inner product of matrices */
     static Matrix inner_product(const Matrix&, const Matrix&);

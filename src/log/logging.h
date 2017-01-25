@@ -13,6 +13,7 @@ enum LogLevel {
     logERROR, logWARNING, logPROGRESS, logINFO, logDEBUG
 };
 
+namespace logging {
 class Logger {
  private:
     std::ostringstream _buffer;
@@ -84,9 +85,10 @@ class Logger {
     }
     */
 };
+}  // namespace logging
 
 extern LogLevel loglevel;
 
-#define log(level) if (level > loglevel); else Logger(level)
+#define logger(level) if (level > loglevel); else logging::Logger(level)
 
 #endif  // SRC_LOG_LOGGING_H_

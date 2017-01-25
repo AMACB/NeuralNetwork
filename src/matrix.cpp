@@ -121,6 +121,13 @@ Matrix Matrix::operator*(double val) const {
     return result;
 }
 
+/* Compound scalar multiplication */
+void Matrix::operator*=(double val) {
+    for (size_t i = 0; i < this->data.size(); ++i) {
+        this->data[i] *= val;
+    }
+}
+
 /* Inner product of matrices */
 Matrix Matrix::inner_product(const Matrix& a, const Matrix& b) {
     if (a.rows == b.rows && a.cols == b.cols) {

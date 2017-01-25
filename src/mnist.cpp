@@ -10,20 +10,20 @@
 
 namespace mnist {
     std::vector<mnist::dataset*> load_test_cases(std::string filename) {
-        log(logINFO) << "[MNIST] Loading test data...\n";
+        logger(logINFO) << "[MNIST] Loading test data...\n";
         std::vector<mnist::dataset*> result;
         std::string line;
         std::ifstream in_file(filename);
         if (!in_file.is_open()) {
-            log(logERROR) << "Could not read file " << filename;
+            logger(logERROR) << "Could not read file " << filename;
             exit(1);
         }
-        log(logINFO) << "[MNIST] Reading CSV file...\n";
-        log(logINFO) << "[MNIST] Loading test cases...\n";
+        logger(logINFO) << "[MNIST] Reading CSV file...\n";
+        logger(logINFO) << "[MNIST] Loading test cases...\n";
         int current_count = 0;
         while (std::getline(in_file, line)) {
             current_count++;
-            log(logINFO) << "\r[MNIST] Loading test case " << current_count;
+            logger(logINFO) << "\r[MNIST] Loading test case " << current_count;
             std::stringstream ss(line);
             std::vector<std::string> v;
             std::string field;
@@ -50,7 +50,7 @@ namespace mnist {
             result.push_back(data);
         }
         in_file.close();
-        log(logINFO) << "\r[MNIST] Test data loaded       \n";
+        logger(logINFO) << "\r[MNIST] Test data loaded       \n";
         return result;
     }
 }  // namespace mnist

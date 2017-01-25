@@ -1,9 +1,16 @@
 /* Copyright 2017 Alexander Burton. All rights reserved. */
 
+// TODO
+// - choice of initializer
+// - choice of sigmoid function
+// - choice of cross entropy function
+
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdlib>
 #include <ctime>
+#include <exception>
 #include <functional>
 #include <iostream>
 #include <numeric>
@@ -18,6 +25,7 @@ typedef std::chrono::steady_clock::time_point time_point;
 #define now() std::chrono::steady_clock::now();
 
 namespace network {
+
 /*
  * Returns num_samples samples of double_v of length
  * len_samples of normal distribution
@@ -70,6 +78,7 @@ Matrix Network::sigmoid(Matrix a) {
 /*
 * Initializes the Network give the sizes, where 
 * the nth element is the number of neurons in the nth layer
+* Uses Gaussian distribution to generate weights and biases divided by sqrt(connected neurons)
 */
 Network::Network(std::vector<size_t> input_sizes) {
     std::vector<size_t>::iterator iter;
@@ -93,6 +102,7 @@ Network::Network(std::vector<size_t> input_sizes) {
         /* iter is one element behind iter_2 */
         /* Pushes a single layer at a time */
         Matrix* samples = Network::normal_samples(*iter_2, *iter);
+        *samples *= (1.0 / std::sqrt(*iter));
         weights.push_back(samples);
     }
     /*
@@ -134,12 +144,12 @@ double_v Network::feedforward(double_v current) {
 
 /* Stochastic Gradient Decent Algorithm */
 void Network::SGD(std::vector<mnist::dataset*>* training_data, std::vector<mnist::dataset*>* test_data,
-        size_t num_epochs, size_t mini_batch_size, double learning_rate) {
+        size_t num_epochs, size_t mini_batch_size, double learning_rate, double lambda, bool is_verbose) {
     /* Initialize variables with useful measures */
-    log(logPROGRESS) << "[SGD] Beginning SGD..." << "\n";
-    log(logINFO) << "[SGD] Number of epochs: " << num_epochs << "\n";
-    log(logINFO) << "[SGD] Mini batch size: " << mini_batch_size << "\n";
-    log(logINFO) << "[SGD] Learning rate: " << learning_rate << "\n";
+    logger(logPROGRESS) << "[SGD] Beginning SGD..." << "\n";
+    logger(logINFO) << "[SGD] Number of epochs: " << num_epochs << "\n";
+    logger(logINFO) << "[SGD] Mini batch size: " << mini_batch_size << "\n";
+    logger(logINFO) << "[SGD] Learning rate: " << learning_rate << "\n";
 
     size_t n_test           = test_data->size();       // number of test datasets
     size_t n                = training_data->size();   // number of training datasets
@@ -149,7 +159,7 @@ void Network::SGD(std::vector<mnist::dataset*>* training_data, std::vector<mnist
     /* n mod mini_batch_size datasets are excluded to make sure minibatches have same size */
 
     for (size_t j = 0; j < num_epochs; ++j) {
-        log(logINFO) << "[SGD] Beginning epoch " << j+1 << '\n';
+        logger(logINFO) << "[SGD] Beginning epoch " << j+1 << '\n';
         std::random_shuffle(training_data->begin(), training_data->end());
         /* Vector of all minibatches */
         std::vector<std::vector<mnist::dataset*> > mini_batches(num_mini_batches,
@@ -162,27 +172,32 @@ void Network::SGD(std::vector<mnist::dataset*>* training_data, std::vector<mnist
             }
         }
 
-        log(logINFO) << "[SGD] Updating minibatches..." << '\n';
-        log(logINFO) << "[SGD] Updating minibatch 0";
+        logger(logINFO) << "[SGD] Updating minibatches..." << '\n';
+        logger(logINFO) << "[SGD] Updating minibatch 0";
         /* Update each minibatch */
         for (size_t i = 0; i < num_mini_batches; ++i) {
-            log(logINFO) << "\r[SGD] Updating minibatch " << i+1;
-            this->update_mini_batch(&mini_batches[i], learning_rate);
+            logger(logINFO) << "\r[SGD] Updating minibatch " << i+1;
+            this->update_mini_batch(&mini_batches[i], learning_rate, lambda, n);
         }
-        log(logINFO) << "\r[SGD] Done updating minibatches\n";
+        logger(logINFO) << "\r[SGD] Done updating minibatches\n";
 
         if (test_data->size() > 0) {
-            log(logINFO) << "[SGD] Evaluating test dataset...\n";
-            log(logPROGRESS) << "Epoch " << j+1 << ": "
+            logger(logINFO) << "[SGD] Evaluating test dataset...\n";
+            logger(logPROGRESS) << "Epoch " << j+1 << ": "
                 << this->evaluate(test_data) << " / " << n_test << "\n";
         } else {
-            log(logPROGRESS) << "Epoch " << j+1 << " complete." << "\n";
+            logger(logPROGRESS) << "Epoch " << j+1 << " complete." << "\n";
+        }
+        
+        if (is_verbose) {
+            // print stuff
         }
     }
 }
 
 /* Updates given a mini batch of datasets */
-void Network::update_mini_batch(std::vector<mnist::dataset*>* mini_batch, double learning_rate) {
+void Network::update_mini_batch(std::vector<mnist::dataset*>* mini_batch,
+        double learning_rate, double lambda, int training_data_size) {
     std::vector<Matrix> nabla_b, nabla_w;
 
     /* Create zero-filled matrix of same dimensions */
@@ -219,12 +234,11 @@ void Network::update_mini_batch(std::vector<mnist::dataset*>* mini_batch, double
     }
     /* Update the biases and weights */
     for (size_t i = 0; i < this->biases.size() && i < nabla_b.size(); ++i) {
-        Matrix nabla_b_val = nabla_b[i] * (- learning_rate / mini_batch->size());
-        *this->biases[i] += nabla_b_val;
+        *this->biases[i] *= (1 - learning_rate * (lambda / training_data_size));
+        *this->biases[i] += (nabla_b[i] * (- learning_rate / mini_batch->size()));
     }
     for (size_t i = 0; i < this->weights.size() && i < nabla_w.size(); ++i) {
-        Matrix nabla_w_val = nabla_w[i] * (- learning_rate / mini_batch->size());
-        *this->weights[i] += nabla_w_val;
+        *this->weights[i] += (nabla_w[i] * (- learning_rate / mini_batch->size()));
     }
 }
 
@@ -251,7 +265,10 @@ std::pair<std::vector<Matrix>, std::vector<Matrix> >* Network::backprop(mnist::d
     }
 
     /* Backward pass */
-    double_v delta = this->cost_derivative(activations.back(), dataset->output);
+    // double_v delta = this->cost_derivative(activations.back(), dataset->output);
+    double_v delta = Network::cross_entropy_delta(zvalues.back(), activations.back(),
+        std::vector<double>(dataset->output.begin(), dataset->output.end()));
+
     for (size_t i = 0; i < delta.size() && i < zvalues.back().size(); ++i) {
         delta.at(i) *=  Network::sigmoid_prime(zvalues.back().at(i));
     }
@@ -326,5 +343,88 @@ int Network::get_result(const double_v& output) {
     double_v::const_iterator iter = std::max_element(output.begin(), output.end());
     int index_of_max = std::distance(output.begin(), iter);
     return index_of_max;
+}
+
+/*
+ * Quadratic cost function
+ * Returns the cost with actual output and desired output
+ */
+double Network::quadratic_cost(const double_v& actual, const double_v& desired) {
+    if (actual.size() == desired.size()) {
+        double total = 0;
+        for (double_v::const_iterator a = actual.begin(), d = desired.begin();
+                a != actual.end() && d != desired.end(); ++a, ++d) {
+            double val = *a - *d;
+            total += val * val;
+        }
+        return 0.5 * total;
+    } else {
+        logger(logERROR) << "Error in computing quadratic cost: "
+            << actual.size() << " and " << desired.size() << " sizes not compatible";
+        exit(1);
+    }
+}
+
+/*
+ * Returns the delta error from the layer z
+ */
+double_v Network::quadratic_delta(const double_v& zs, const double_v& actual, const double_v& desired) {
+    if (zs.size() == actual.size() == desired.size()) {
+        double_v result;
+        for (double_v::const_iterator z = zs.begin(), a = actual.begin(), d = desired.begin();
+                z != zs.end() && a != actual.end() && d != desired.end(); ++z, ++a, ++d) {
+            result.push_back(
+                (*a - *d) * Network::sigmoid_prime(*z));
+        }
+        return result;
+    } else {
+        logger(logERROR) << "Error in computing quadratic delta: "
+            << zs.size() << ", " << actual.size() << ", and " << desired.size() << " sizes not compatible";
+        exit(1);
+    }
+}
+
+/*
+ * Cross entropy cost function
+ * Returns the cost with actual output and desired output
+ */
+double Network::cross_entropy_cost(const double_v& actual, const double_v& desired) {
+    if (actual.size() == desired.size()) {
+        double total = 0;
+        for (double_v::const_iterator a = actual.begin(), d = desired.begin();
+                a != actual.end() && d != desired.end(); ++a, ++d) {
+            double val;
+            try {
+                val = (- *d) * std::log(*a) - (1 - *d) * std::log(1 - *a);
+            } catch (std::domain_error e) {
+                val = 0;
+            }
+            total += val;
+        }
+        return total;
+    } else {
+        logger(logERROR) << "Error in computing cross entropy cost: "
+            << actual.size() << " and " << desired.size() << " sizes not compatible";
+        exit(1);
+    }
+}
+
+/*
+ * Returns the delta error
+ * First argument is a dummy argument to enforce consistency
+ */
+double_v Network::cross_entropy_delta(const double_v&, const double_v& actual, const double_v& desired) {
+    if (actual.size() == desired.size()) {
+        double_v result;
+        for (double_v::const_iterator a = actual.begin(), d = desired.begin();
+                a != actual.end() && d != desired.end(); ++a, ++d) {
+            result.push_back(*a - *d);
+        }
+        return result;
+    } else {
+        logger(logERROR) << "Error in computing cross entropy delta: "
+            << actual.size() << " and " << desired.size() << " sizes not compatible";
+        exit(1);
+    }
 }
 }  // namespace network

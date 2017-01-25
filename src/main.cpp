@@ -39,11 +39,13 @@ int main(int argc, char* argv[]) {
         cerr << "Option missing parameter" << endl;
         exit(1);
     } */
+	bool is_verbose = false;
 
     bool has_test = false;
     std::string test_file;
 
     double learning_rate = 1.0;
+    double lambda = 0.0;
     size_t hidden_layer_size = 10;
     size_t epoch_count = 1;
     size_t mini_batch_size = 1;
@@ -65,6 +67,9 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--learning-rate" || arg == "-r") {
             learning_rate = std::stod(args[i+1]);
             ++i;
+        } else if (arg == "--lambda" || arg == "-b") {
+        	lambda = std::stod(args[i+1]);
+        	++i;
         } else if (arg == "--hidden-layer-size" || arg == "-s") {
             hidden_layer_size = std::stoul(args[i+1]);
             ++i;
@@ -83,6 +88,7 @@ int main(int argc, char* argv[]) {
             load = args[i+1];
             ++i;
         } else if (arg == "--verbose" || arg == "-v") {
+        	is_verbose = true;
         	loglevel = logINFO;
         } else if (arg == "--quiet" || arg == "-q") {
         	loglevel = logWARNING;
@@ -111,7 +117,7 @@ int main(int argc, char* argv[]) {
         test_cases = mnist::load_test_cases(args[0]);
     }
 
-    net->SGD(&train_cases, &test_cases, epoch_count, mini_batch_size, learning_rate);
+    net->SGD(&train_cases, &test_cases, epoch_count, mini_batch_size, learning_rate, lambda, is_verbose);
     delete net;
 }
 

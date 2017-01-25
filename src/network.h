@@ -15,6 +15,7 @@ typedef double ddouble;
 typedef std::vector<ddouble> double_v;
 
 namespace network {
+
 class Network {
  public:
     size_t num_layers;
@@ -68,10 +69,10 @@ class Network {
 
     /* Stochastic Gradient Decent Algorithm */
     void SGD(std::vector<mnist::dataset*>*, std::vector<mnist::dataset*>*,
-            size_t, size_t, double);
+            size_t, size_t, double, double, bool);
 
     /* Updates given a mini batch of datasets */
-    void update_mini_batch(std::vector<mnist::dataset*>*, double);
+    void update_mini_batch(std::vector<mnist::dataset*>*, double learning_rate, double lambda, int training_data_size);
 
     /* Uses the backpropogation algorithm to calculate the errors */
     /* Returns a std::pair with delta nabla of biases; and delta nabla of weights */
@@ -88,6 +89,29 @@ class Network {
      * where the only truthy element is the greatest from the double_v.
      */
     static int get_result(const double_v& output);
+
+    /*
+     * Quadratic cost function
+     * Returns the cost with actual output and desired output
+     */
+    static double quadratic_cost(const double_v&, const double_v&);
+
+    /*
+     * Returns the delta error from the layer z
+     */
+    static double_v quadratic_delta(const double_v&, const double_v&, const double_v&);
+
+    /*
+     * Cross entropy cost function
+     * Returns the cost with actual output and desired output
+     */
+    static double cross_entropy_cost(const double_v&, const double_v&);
+
+    /*
+     * Returns the delta error
+     * First argument is a dummy argument to enforce consistency
+     */
+    static double_v cross_entropy_delta(const double_v&, const double_v&, const double_v&);
 };
 }  // namespace network
 
