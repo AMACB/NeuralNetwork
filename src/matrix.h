@@ -19,7 +19,7 @@ class Matrix {
     double_v data;
 
     /* Constructs a blank matrix */
-    explicit Matrix();
+    Matrix();
 
     /* Constructs an m x n matrix */
     Matrix(const size_t&, const size_t&);
@@ -29,6 +29,9 @@ class Matrix {
 
     /* Copy constructor */
     Matrix(const Matrix&);
+
+    /* From string representation */
+    Matrix(const std::string&);
 
     /* Frees up all memory */
     ~Matrix();
@@ -56,7 +59,7 @@ class Matrix {
 
     /* Scalar multiplication */
     Matrix operator*(double) const;
-    
+
     /* Compound scalar multiplication */
     void operator*=(double);
 
@@ -84,6 +87,12 @@ class Matrix {
 
     /* Sets the value at the location */
     void set_index(size_t, size_t, double);
+    
+    /*
+     * Convert to string 
+     * String will be of the form [[a,b,c,...],[d,e,f,...],...]
+     */
+    std::string to_string();
 };
 }  // namespace network
 

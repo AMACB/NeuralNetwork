@@ -69,7 +69,7 @@ class Network {
 
     /* Stochastic Gradient Decent Algorithm */
     void SGD(std::vector<mnist::dataset*>*, std::vector<mnist::dataset*>*,
-            size_t, size_t, double, double, bool);
+            size_t, size_t, double, double);
 
     /* Updates given a mini batch of datasets */
     void update_mini_batch(std::vector<mnist::dataset*>*, double learning_rate, double lambda, int training_data_size);
@@ -79,7 +79,7 @@ class Network {
     std::pair<std::vector<Matrix>, std::vector<Matrix> >* backprop(mnist::dataset* dataset);
 
     /* Find the difference between the correct output and the final activations */
-    double_v cost_derivative(const double_v& activation, const std::vector<bool>& output);
+    static double_v cost_derivative(const double_v& activation, const std::vector<bool>& output);
 
     /* Evaluates a set of data and returns the number of sucessful datasets */
     int evaluate(std::vector<mnist::dataset*>* datasets);
@@ -112,6 +112,11 @@ class Network {
      * First argument is a dummy argument to enforce consistency
      */
     static double_v cross_entropy_delta(const double_v&, const double_v&, const double_v&);
+
+    /*
+     * Save the network to a file
+     */
+    void save(std::string filename);
 };
 }  // namespace network
 

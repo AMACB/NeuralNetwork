@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -11,7 +12,10 @@
 namespace network {
 /* Constructs a blank matrix */
 Matrix::Matrix() {
-    Matrix::Matrix(0, 0);
+    this->rows = 0;
+    this->cols = 0;
+    this->num_elements = 0;
+    data.resize(0);
 }
 
 /* Constructs an m x n matrix */
@@ -36,6 +40,68 @@ Matrix::Matrix(const Matrix& other) {
     this->cols = other.cols;
     this->num_elements = other.num_elements;
     this->data = std::vector<double>(other.data.begin(), other.data.end());
+}
+
+/* From string representation */
+Matrix::Matrix(const std::string& str) {
+    size_t num_open_bracket = 0, num_close_bracket = 0, num_comma = 0;
+    if (str.size() < 2) {
+        throw std::runtime_error("Error in parsing matrix: string too short");
+    }
+    for (auto iter = str.begin(); iter != str.end(); ++iter) {
+        if (*iter == ',') ++num_comma;
+        if (*iter == '[') ++num_open_bracket;
+        if (*iter == ']') ++num_close_bracket;
+    }
+    if (num_open_bracket != num_close_bracket) {
+        throw std::runtime_error("Error in parsing matrix: missing [ or ]");
+    }
+    size_t num_rows = 0, num_cols = 0;
+    if (num_open_bracket < 1) {
+        throw std::runtime_error("Error in parsing matrix: could not find beginning [");
+    }
+    num_rows = num_open_bracket - 1;
+    if (num_comma + 1 < num_rows) {
+        throw std::runtime_error("Error in parsing matrix: missing ,");
+    }
+    // Num_cols will be of the form: row * (x-1) = k = (num_comma - num_rows + 1)
+    // First find k
+    size_t k = (num_comma + 1) - num_rows;
+    // Make sure k % rows
+    if (num_rows == 0) {
+        num_cols = 0;
+    } else if (k % num_rows != 0) {
+        throw std::runtime_error("Error in parsing matrix: jagged or missing ,");
+    }
+    // Store solution
+    num_cols = k / num_rows + 1;
+
+    this->rows = num_rows;
+    this->cols = num_cols;
+    this->num_elements = num_rows * num_cols;
+    // std::cout << this->rows << " " << this->cols << " " << this->num_elements << std::endl << std::flush;
+    data.resize(this->num_elements);
+
+    std::istringstream ss(str.substr(1, str.size() - 2));    
+    std::string element;
+    ssize_t row_number = -1;  // <-- 0 refers to the first, 1 to the second, etc.
+    ssize_t col_number = 0;  // <-'
+    while (std::getline(ss, element, ',')) {
+        //continue;
+        if (element.size() == 0) {
+            throw std::runtime_error("Error in parsing matrix: expected value");
+        }
+        if (element.at(0) == '[') {
+            col_number = 0;
+            ++ row_number;  // increments for the first time, so -1 becomes 0 the first iteration
+            element.erase(0, 1);
+        } else if (element.back() == ']') {
+            element.erase(element.size() - 1, 1);
+        }
+        this->set_index(static_cast<size_t>(row_number), static_cast<size_t>(col_number), std::stod(element));
+
+        ++ col_number;
+    }
 }
 
 /* Frees up all memory */
@@ -147,9 +213,10 @@ Matrix Matrix::inner_product(const Matrix& a, const Matrix& b) {
         }
         return result;
     } else {
-        std::cerr << "Cannot take inner product of matrices: sizes "
-            << a.sizes() << " and " << b.sizes() << " not compatible" << std::endl;
-        throw 1;
+        std::stringstream err;
+        err << "Cannot take inner product of matrices: sizes "
+            << a.sizes() << " and " << b.sizes() << " not compatible";
+        throw std::runtime_error(err.str());
     }
 }
 
@@ -171,9 +238,10 @@ Matrix Matrix::operator*(const double_v& vec) const {
             }
         }
     } else {
-        std::cerr << "Cannot take product of matrix to vector: sizes "
-            << this->sizes() << " and " << vec.size() << " not compatible" << std::endl;
-        throw 1;
+        std::stringstream err;
+        err << "Cannot take product of matrix to vector: sizes "
+            << this->sizes() << " and " << vec.size() << " not compatible";
+        throw std::runtime_error(err.str());
     }
     return result;
 }
@@ -194,9 +262,10 @@ Matrix Matrix::operator*(const Matrix& other) const {
         }
         return result;
     } else {
-        std::cerr << "Cannot multiply matrices: sizes " << this->sizes()
-            << " and " << other.sizes() << " not compatible" << std::endl;
-        throw 1;
+        std::stringstream err;
+        err << "Cannot multiply matrices: sizes " << this->sizes()
+            << " and " << other.sizes() << " not compatible";
+        throw err.str();
     }
 }
 
@@ -208,9 +277,10 @@ void Matrix::operator+=(const Matrix& other) {
             this->data[i] += other.data[i];
         }
     } else {
-        std::cerr << "Cannot compound add matrices: sizes " << this->sizes()
-            << " and " << other.sizes() << " not compatible" << std::endl;
-        throw 1;
+        std::stringstream err;
+        err << "Cannot compound add matrices: sizes " << this->sizes()
+            << " and " << other.sizes() << " not compatible";
+        throw std::runtime_error(err.str());
     }
 }
 
@@ -224,9 +294,10 @@ Matrix Matrix::operator+(const Matrix& other) const {
         }
         return result;
     } else {
-        std::cerr << "Cannot add matrices: sizes " << this->sizes()
-            << " and " << other.sizes() << " not compatible" << std::endl;
-        throw 1;
+        std::stringstream err;
+        err << "Cannot add matrices: sizes " << this->sizes()
+            << " and " << other.sizes() << " not compatible";
+        throw std::runtime_error(err.str());
     }
 }
 
@@ -241,9 +312,10 @@ Matrix Matrix::operator+(const double_v& other) const {
         }
         return result;
     } else {
-        std::cout << "Cannot add matrix to vector: sizes " << this->sizes()
-            << " and " << other.size() << " not compatible" << std::endl;
-        throw 1;
+        std::stringstream err;
+        err << "Cannot add matrix to vector: sizes " << this->sizes()
+            << " and " << other.size() << " not compatible";
+        throw std::runtime_error(err.str());
     }
 }
 
@@ -255,5 +327,25 @@ double Matrix::index(size_t row, size_t col) const {
 /* Sets the value at the location */
 void Matrix::set_index(size_t row, size_t col, double val) {
     data[row*cols + col] = val;
+}
+
+/*
+ * Convert to string 
+ * String will be of the form [[a,b,c,...],[d,e,f,...],...]
+ */
+std::string Matrix::to_string() {
+    std::stringstream str;
+    str << "[";
+    for (size_t i = 0; i < this->rows; ++i) {
+        str << "[";
+        for (size_t j = 0; j < this->cols; ++j) {
+            str << this->index(i,j);
+            if (j < this->cols - 1) str << ",";
+        }
+        str << "]";
+        if (i < this->rows - 1) str << ",";
+    }
+    str << "]";
+    return str.str();
 }
 }  // namespace network

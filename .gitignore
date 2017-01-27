@@ -5,3 +5,4 @@ network
 .DS_Store
 *.out
 *.o
+*.net

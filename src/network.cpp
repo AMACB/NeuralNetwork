@@ -1,6 +1,6 @@
 /* Copyright 2017 Alexander Burton. All rights reserved. */
 
-// TODO
+// TODO(amacburton@gmail.com)
 // - choice of initializer
 // - choice of sigmoid function
 // - choice of cross entropy function
@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <exception>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <numeric>
@@ -115,7 +116,44 @@ Network::Network(std::vector<size_t> input_sizes) {
 * Loads the network from a previously-saved file
 */
 Network::Network(std::string filename) {
-    filename;
+    std::ifstream infile;
+    infile.open(filename);
+    if (!infile.is_open()) {
+        logger(logERROR) << "Error reading file " << filename;
+        exit(1);
+    }
+    std::string line;
+    
+    enum {
+        BIASES, WEIGHTS        
+    } mode = BIASES;
+    
+    while (infile.good()) {
+        std::getline(infile, line);
+        if (line == "biases") {
+            mode = BIASES;
+        } else if (line == "weights") {
+            mode = WEIGHTS;
+        } else if (line == "end") {
+            break;
+        } else {
+            Matrix* mat = new Matrix(line);
+            if (mode == BIASES) {
+                this->biases.push_back(mat);
+            } else if (mode == WEIGHTS) {
+                this->weights.push_back(mat);
+            }
+        }
+    }
+    if (this->biases.size() != this->weights.size()) {
+        throw std::runtime_error("Error in loading matrix: biases different size than weights");
+    }
+    this->num_layers = this->biases.size() + 1;
+    std::vector<size_t> _sizes;
+    for (Matrix* m : this->weights) {
+        std::cout << m->sizes() << std::endl << std::flush;
+    }
+    infile.close();
 }
 
 Network::~Network() {
@@ -144,7 +182,7 @@ double_v Network::feedforward(double_v current) {
 
 /* Stochastic Gradient Decent Algorithm */
 void Network::SGD(std::vector<mnist::dataset*>* training_data, std::vector<mnist::dataset*>* test_data,
-        size_t num_epochs, size_t mini_batch_size, double learning_rate, double lambda, bool is_verbose) {
+        size_t num_epochs, size_t mini_batch_size, double learning_rate, double lambda) {
     /* Initialize variables with useful measures */
     logger(logPROGRESS) << "[SGD] Beginning SGD..." << "\n";
     logger(logINFO) << "[SGD] Number of epochs: " << num_epochs << "\n";
@@ -187,10 +225,6 @@ void Network::SGD(std::vector<mnist::dataset*>* training_data, std::vector<mnist
                 << this->evaluate(test_data) << " / " << n_test << "\n";
         } else {
             logger(logPROGRESS) << "Epoch " << j+1 << " complete." << "\n";
-        }
-        
-        if (is_verbose) {
-            // print stuff
         }
     }
 }
@@ -251,9 +285,7 @@ std::pair<std::vector<Matrix>, std::vector<Matrix> >* Network::backprop(mnist::d
     std::vector<double_v> activations, zvalues;
     double_v activation(dataset->input.begin(), dataset->input.end());
     activations.push_back(activation);
-
     Matrix activation_mat = Matrix(activation).transposed();
-
     for (size_t i = 0; i < this->biases.size() && i < this->weights.size(); ++i) {
         Matrix *bias = this->biases[i], *weight = this->weights[i];
         double_v zvalue = ((*weight * activation_mat) + bias->flatten()).flatten();
@@ -279,7 +311,6 @@ std::pair<std::vector<Matrix>, std::vector<Matrix> >* Network::backprop(mnist::d
     nabla_b.back() = Matrix(delta_mat);
     Matrix activations_sec = Matrix(activations.at(activations.size() - 2));
     nabla_w.back() = Matrix(delta_mat * activations_sec);
-
     double_v z_val, sp;
     /* Iterate through layers to find deltas based on previous */
     for (size_t l = 2; l < this->num_layers; ++l) {
@@ -297,7 +328,6 @@ std::pair<std::vector<Matrix>, std::vector<Matrix> >* Network::backprop(mnist::d
     auto pair = new std::pair<std::vector<Matrix>, std::vector<Matrix> >;
     pair->first = nabla_b;
     pair->second = nabla_w;
-
     return pair;
 }
 
@@ -426,5 +456,25 @@ double_v Network::cross_entropy_delta(const double_v&, const double_v& actual, c
             << actual.size() << " and " << desired.size() << " sizes not compatible";
         exit(1);
     }
+}
+
+/*
+ * Save the network to a file
+ */
+void Network::save(std::string filename) {
+    std::ofstream out;
+    out.open(filename);
+    out << "biases\n";
+    for (auto iter = this->biases.begin(); iter != this->biases.end(); ++iter) {
+        out << (*iter)->to_string() << "\n";
+    }
+    out << "weights\n";
+    for (auto iter = this->weights.begin(); iter != this->weights.end(); ++iter) {
+        out << (*iter)->to_string() << "\n";
+        
+    }
+    out << "end\n";
+    
+    out.close();
 }
 }  // namespace network

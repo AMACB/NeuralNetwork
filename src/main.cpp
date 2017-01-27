@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
         cerr << "Option missing parameter" << endl;
         exit(1);
     } */
-	bool is_verbose = false;
+    bool is_verbose = false;
 
     bool has_test = false;
     std::string test_file;
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
 
     bool has_output = false;
     std::string output;
-    
+
     loglevel = logPROGRESS;
 
     for (size_t i = PARAM_SIZE; i < args.size(); ++i) {
@@ -68,8 +68,8 @@ int main(int argc, char* argv[]) {
             learning_rate = std::stod(args[i+1]);
             ++i;
         } else if (arg == "--lambda" || arg == "-b") {
-        	lambda = std::stod(args[i+1]);
-        	++i;
+            lambda = std::stod(args[i+1]);
+            ++i;
         } else if (arg == "--hidden-layer-size" || arg == "-s") {
             hidden_layer_size = std::stoul(args[i+1]);
             ++i;
@@ -88,10 +88,10 @@ int main(int argc, char* argv[]) {
             load = args[i+1];
             ++i;
         } else if (arg == "--verbose" || arg == "-v") {
-        	is_verbose = true;
-        	loglevel = logINFO;
+            is_verbose = true;
+            loglevel = logINFO;
         } else if (arg == "--quiet" || arg == "-q") {
-        	loglevel = logWARNING;
+            loglevel = logWARNING;
         } else {
             cerr << "Invalid option flag: " << arg << endl;
             exit(1);
@@ -117,7 +117,10 @@ int main(int argc, char* argv[]) {
         test_cases = mnist::load_test_cases(args[0]);
     }
 
-    net->SGD(&train_cases, &test_cases, epoch_count, mini_batch_size, learning_rate, lambda, is_verbose);
+    net->SGD(&train_cases, &test_cases, epoch_count, mini_batch_size, learning_rate, lambda);
+    if (has_output) {
+    	net->save(output);
+    }
     delete net;
 }
 
