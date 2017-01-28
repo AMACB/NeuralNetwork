@@ -150,8 +150,9 @@ Network::Network(std::string filename) {
     }
     this->num_layers = this->biases.size() + 1;
     std::vector<size_t> _sizes;
+    _sizes.push_back(this->weights.at(0)->cols);
     for (Matrix* m : this->weights) {
-        std::cout << m->sizes() << std::endl << std::flush;
+        _sizes.push_back(m->rows);
     }
     infile.close();
 }
