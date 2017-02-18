@@ -36,6 +36,9 @@ class Logger {
             case logDEBUG:
                 return std::string("[DEBUG] : ");
                 break;
+	    default:
+		return std::string("");
+		break;
         }
     }
 
