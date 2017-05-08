@@ -7,9 +7,9 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
-#include <ctime>
 #include <exception>
 #include <fstream>
 #include <functional>
